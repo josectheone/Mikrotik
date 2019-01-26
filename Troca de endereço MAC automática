@@ -1,0 +1,54 @@
+## Define chars table
+:global chArray "0ABCDEF0123456789ABCDEF012345ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF";
+
+## Define WLAN interface
+:local WanInterface "wlan11";
+
+## Define others
+:local CurrentTime [/system clock get time];
+:local CurrentCpuLoad [/system resource get cpu-load];
+:local CurrentUptime [/system resource get uptime];
+
+#get counters
+:local ch1num  0;
+:local ch2num  0;
+:local ch3num  [:tonum [:pick $CurrentTime 6 8] ];
+:local ch4num  [:tonum [:pick $CurrentTime 3 5] ];
+:local ch5num  [:tonum [:pick $CurrentTime 0 2] ];
+:local ch6num  [:tonum [:pick $CurrentTime 7 8] ];
+:local ch7num  [:tonum [:pick ($CurrentCpuLoad + 2)] ];
+:local ch8num  [:tonum [:pick ($CurrentCpuLoad / 2)] ];
+:local ch9num  [:tonum [:pick $CurrentUptime 7 8] ];
+:local ch10num [:tonum [:pick $CurrentUptime 6 8] ];
+:local ch11num [:tonum [:pick $CurrentUptime 3 5] ];
+:local ch12num [:tonum [:pick $CurrentCpuLoad] ];
+
+## Get now MacAddress
+:local OldMAC [/interface wireless get $WanInterface mac-address];
+## Generate Random MAC Address
+:local RndMAC ( \
+  [:tostr [:pick $chArray $ch1num]].[:tostr [:pick $chArray $ch2num]].":". \
+  [:tostr [:pick $chArray $ch3num]].[:tostr [:pick $chArray $ch4num]].":". \
+  [:tostr [:pick $chArray $ch5num]].[:tostr [:pick $chArray $ch6num]].":". \
+  [:tostr [:pick $chArray $ch7num]].[:tostr [:pick $chArray $ch8num]].":". \
+  [:tostr [:pick $chArray $ch9num]].[:tostr [:pick $chArray $ch10num]].":". \
+  [:tostr [:pick $chArray $ch11num]].[:tostr [:pick $chArray $ch12num]] \
+);
+
+:if ( [:len $RndMAC] = 17) do={
+  :log warning "Change MAC to random ($OldMAC -> $RndMAC)";
+  :do {
+    /interface wireless set $WanInterface mac-address=$RndMAC;
+    :delay 4;
+    :local NewMAC [/interface wireless get $WanInterface mac-address];
+    :if ( $NewMAC = $RndMAC) do={
+      :log info "MAC address on \"$WanInterface\" changed successfully! New MAC is $NewMAC";
+    } else={
+      :log warning "MAC address was NOT changed (now is $NewMAC)";
+    }
+  } on-error={
+    :log warning "Failed changing MAC address on \"$WanInterface\" to $RndMAC";
+  };
+} else={
+  :log warning "Wrong random MAC ($RndMAC) length";
+}
