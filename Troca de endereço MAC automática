@@ -1,8 +1,8 @@
 ## Define chars table
 :global chArray "0ABCDEF0123456789ABCDEF012345ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF";
 
-## Define WLAN interface
-:local WanInterface "wlan11";
+## Define WAN interface
+:local WanInterface "ether1";
 
 ## Define others
 :local CurrentTime [/system clock get time];
@@ -24,7 +24,7 @@
 :local ch12num [:tonum [:pick $CurrentCpuLoad] ];
 
 ## Get now MacAddress
-:local OldMAC [/interface wireless get $WanInterface mac-address];
+:local OldMAC [/interface ethernet get $WanInterface mac-address];
 ## Generate Random MAC Address
 :local RndMAC ( \
   [:tostr [:pick $chArray $ch1num]].[:tostr [:pick $chArray $ch2num]].":". \
@@ -38,9 +38,9 @@
 :if ( [:len $RndMAC] = 17) do={
   :log warning "Change MAC to random ($OldMAC -> $RndMAC)";
   :do {
-    /interface wireless set $WanInterface mac-address=$RndMAC;
+    /interface ethernet set $WanInterface mac-address=$RndMAC;
     :delay 4;
-    :local NewMAC [/interface wireless get $WanInterface mac-address];
+    :local NewMAC [/interface ethernet get $WanInterface mac-address];
     :if ( $NewMAC = $RndMAC) do={
       :log info "MAC address on \"$WanInterface\" changed successfully! New MAC is $NewMAC";
     } else={
